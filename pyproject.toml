@@ -6,5 +6,6 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "mellea>=0.3.2",
+    "python-multipart",
     "uvicorn[standard]",
 ]
