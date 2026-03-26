@@ -16,7 +16,8 @@ The `examples/` directory contains a complete working server backed by [LMStudio
 ```
 mellea_openai/
 ├── examples/
-│   └── lmstudio_server.py       # Full example: LMStudio-backed server
+│   ├── lmstudio_server.py       # Full example: LMStudio-backed server
+│   └── test_chat.py             # Test client (streaming + non-streaming)
 ├── main.py                       # Uvicorn entry point
 ├── mellea_openai_server/
 │   ├── __init__.py               # Public API: OpenAIRoutes, stream_chunks
@@ -36,6 +37,12 @@ python main.py
 ```
 
 The server starts at `http://localhost:8000`. The included example expects LMStudio to be running at `http://localhost:1234`.
+
+To test it:
+
+```bash
+python examples/test_chat.py --model your-model-id
+```
 
 ## Writing your own server
 
@@ -95,7 +102,7 @@ All standard OpenAI v1 endpoints are registered as stubs:
 
 ## Dependencies
 
-- [`mellea`](https://github.com/fractalego/mellea) ≥ 0.3.2 — LLM abstraction layer
-- `fastapi` — web framework (pulled in via mellea)
+- [`mellea`](https://github.com/fractalego/mellea) ≥ 0.4 — LLM abstraction layer
+- `fastapi` — web framework
 - `uvicorn[standard]` — ASGI server
 - `python-multipart` — required for file/audio upload endpoints
