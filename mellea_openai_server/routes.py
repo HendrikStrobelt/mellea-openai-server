@@ -1,24 +1,18 @@
-import time
-import uuid
-
 from fastapi import FastAPI, Form, Query, UploadFile
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 
-from .models import (
+from .schemas import (
     AudioSpeechRequest,
     AudioTranscriptionResponse,
     AudioTranslationResponse,
     BatchListResponse,
     BatchObject,
-    ChatCompletionChunk,
     ChatCompletionRequest,
     ChatCompletionResponse,
-    ChunkChoice,
     CompletionRequest,
     CompletionResponse,
     CreateBatchRequest,
     CreateFineTuningJobRequest,
-    DeltaContent,
     DeleteFileResponse,
     DeleteModelResponse,
     EmbeddingRequest,
@@ -107,64 +101,6 @@ class OpenAIRoutes:
         app.add_api_route("/v1/batches", self.list_batches, methods=["GET"])
         app.add_api_route("/v1/batches/{batch_id}", self.retrieve_batch, methods=["GET"])
         app.add_api_route("/v1/batches/{batch_id}/cancel", self.cancel_batch, methods=["POST"])
-
-    # -------------------------------------------------------------------
-    # Streaming helper (available to subclasses)
-    # -------------------------------------------------------------------
-
-    @staticmethod
-    async def _stream_chunks(mot, model: str):
-        chunk_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
-        created = int(time.time())
-        prev_len = 0
-        first = True
-
-        while not mot.is_computed():
-            text = await mot.astream()
-            new_text = text[prev_len:]
-            prev_len = len(text)
-
-            if not new_text:
-                continue
-
-            delta = DeltaContent(content=new_text)
-            if first:
-                delta.role = "assistant"
-                first = False
-
-            chunk = ChatCompletionChunk(
-                id=chunk_id,
-                created=created,
-                model=model,
-                choices=[ChunkChoice(delta=delta)],
-            )
-            yield f"data: {chunk.model_dump_json()}\n\n"
-
-        # Yield any remaining text after computed
-        text = mot.value
-        if text and len(text) > prev_len:
-            new_text = text[prev_len:]
-            delta = DeltaContent(content=new_text)
-            if first:
-                delta.role = "assistant"
-                first = False
-            chunk = ChatCompletionChunk(
-                id=chunk_id,
-                created=created,
-                model=model,
-                choices=[ChunkChoice(delta=delta)],
-            )
-            yield f"data: {chunk.model_dump_json()}\n\n"
-
-        # Send finish chunk
-        chunk = ChatCompletionChunk(
-            id=chunk_id,
-            created=created,
-            model=model,
-            choices=[ChunkChoice(delta=DeltaContent(), finish_reason="stop")],
-        )
-        yield f"data: {chunk.model_dump_json()}\n\n"
-        yield "data: [DONE]\n\n"
 
     # -------------------------------------------------------------------
     # Chat completions
